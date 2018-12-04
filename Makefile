@@ -1,7 +1,7 @@
 # OS detection. Not used in CI builds
 ifndef TARGET_OS
 ifeq ($(OS),Windows_NT)
-	TARGET_OS := win32
+	TARGET_OS := windows
 else
 	UNAME_S := $(shell uname -s)
 	ifeq ($(UNAME_S),Linux)
@@ -26,19 +26,13 @@ endif
 endif # TARGET_OS
 
 # OS-specific settings and build flags
-ifeq ($(TARGET_OS),win32)
+ifeq ($(TARGET_OS),windows)
 	ARCHIVE ?= zip
 	TARGET := esptool.exe
 	TARGET_LDFLAGS = -Wl,-static -static-libgcc
 else
 	ARCHIVE ?= tar
 	TARGET := esptool
-endif
-
-ifeq ($(TARGET_OS),osx)
-	TARGET_CFLAGS   = -mmacosx-version-min=10.6 -arch i386 -arch x86_64
-	TARGET_CXXFLAGS = -mmacosx-version-min=10.6 -arch i386 -arch x86_64
-	TARGET_LDFLAGS  = -mmacosx-version-min=10.6 -arch i386 -arch x86_64
 endif
 
 # Packaging into archive (for 'dist' target)
@@ -50,6 +44,8 @@ ifeq ($(ARCHIVE), tar)
 	ARCHIVE_CMD := tar czf
 	ARCHIVE_EXTENSION := tar.gz
 endif
+
+STRIP ?= strip
 
 VERSION ?= $(shell git describe --always)
 
@@ -92,7 +88,7 @@ $(DIST_ARCHIVE): $(TARGET) $(DIST_DIR)
 
 $(TARGET): $(OBJECTS)
 	$(CC) $^ -o $@ $(LDFLAGS)
-	strip $(TARGET) 2>/dev/null \
+	$(STRIP) $(TARGET) 2>/dev/null \
 	|| $(CROSS_TRIPLE)-strip $(TARGET)
 
 $(BUILD_DIR):
